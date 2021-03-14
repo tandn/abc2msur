@@ -1,20 +1,19 @@
-The folder contains the translator which takes an abc specification as input and produces an erlang program as output
+The folder contains the translator which takes an abc specification as input and produces an msur program as output
 
 # Compile the tool
 > make
 
 # Translation
 
-Assume your abc spec has the name of "file.abc"
+Make sure that your abc specification has the name of "file.abc"
 
 The command
 
-> erl -eval "abc2abel:file(\"file.abc\")" -run init stop -noshell
+> erl -eval "abc2msur:file(\"file.abc\")" -run init stop -noshell
 
-will produce one or more Erlang modules, depending on how many component types are there in the abc specification.
+will produce a Msur specification with the name "file.msur".
 
-# Execution
+# Verification
 
-The generated *.erl files are meant to be complied and executed by ABEL, provided in another folder
-
-For the latest ABEL impelementation, please consult https://github.com/ArBITRAL/ABEL
+By using the toolset supporting verification of msur specifications (which eventually utilize state-of-the-art C verifiers)
+https://github.com/labs-lang/masseur
