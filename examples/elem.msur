@@ -1,0 +1,29 @@
+(#sync-1-n send receive)
+
+(#restrict receive)
+
+(#replicated-vars s n x)
+
+;; code for component type Elem
+(#def A
+      (#seq
+      (#guard (= (this s) 1)
+        (send (<= (that n) (this n)) ((this n)) ))
+      (#call B)))
+
+(#def B
+      (receive (>= "msg[0]" (this n)) (x) ((this s)) (0)))
+
+(#def Elem
+      (#par
+      (#call A)
+      (#call B)))
+
+;; initialization 
+
+(#agent C1 Elem (s 1) (n 1) (x 0))
+(#agent C2 Elem (s 1) (n 2) (x 0))
+(#agent C3 Elem (s 1) (n 3) (x 0))
+
+(#system (C1 1) (C2 1) (C3 1))
+

@@ -1,0 +1,44 @@
+(#sync-1-n send receive)
+
+(#restrict receive)
+
+(#replicated-vars u r y p x)
+
+;; code for component type Dancer
+(#def A
+      (#choice
+      (#seq
+        (send #t ((this u)) )
+        (receive (= "msg[0]" (this u)) (x) ((this p)) (1)))
+      (#seq
+        (receive (= r (this r)) (x) )
+        (#seq
+          (receive (/= "msg[0]" (this u)) (y) )
+          (#call A)))))
+
+(#def Dancer
+      (#call A))
+
+;; code for component type Follower
+(#def P
+      (#seq
+      (receive (/= r (this r)) (x) )
+      (#choice
+        (send #t (x) ((this p)) (1))
+        (#seq
+          (receive (and (= "msg[0]" x) (= r (this r))) (y) )
+          (#call P)))))
+
+(#def Follower
+      (#call P))
+
+;; initialization 
+
+(#agent C1 Dancer (u 1) (p 0) (r 1))
+(#agent C2 Dancer (u 2) (p 0) (r 1))
+(#agent C3 Follower (u 3) (p 0) (r 1))
+(#agent C4 Follower (u 4) (p 0) (r 0))
+(#agent C5 Follower (u 5) (p 0) (r 0))
+
+(#system (C1 1) (C2 1) (C3 1) (C4 1) (C5 1))
+

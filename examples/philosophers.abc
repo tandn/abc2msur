@@ -1,0 +1,30 @@
+%% same opinions do not debate
+%% rested one wins tired one about anything
+%% same condition, different opinions -> both tired and for
+component Phi
+	  attributes: u, c, o
+	  behaviour:
+		let {
+		    A := <o = 1>(u,c)@(true).(
+   			 (this.u = x and y /= this.c)(x,y).[o := c]A
+			 +
+		      	 (this.u = x and y = this.c)(x,y).[c := 0]A)
+			 +
+			 <o = 1>(o = this.o)(x,y).(o /= this.o)(x,y).A
+
+		    B := <o = 0>(o /= this.o)(x,y).(
+		              <y /= c>(x,c)@(true).[o := y]B
+			      +
+      		              <y = c>(x,c)@(true).[o := 1, c := 0]B
+			      +
+			      (z = x)(z,y).B)
+		}
+		init A | B
+end
+
+A1 : Phi (u -> 1, c -> 1, o -> 1)
+A2 : Phi (u -> 2, c -> 1, o -> 0)
+A3 : Phi (u -> 3, c -> 1, o -> 0)
+%A4 : Phi (u -> 4, c -> 1, o -> 0)
+%A5 : Phi (u -> 5, c -> 1, o -> 0)
+%A6 : Phi (u -> 6, c -> 1, o -> 0)

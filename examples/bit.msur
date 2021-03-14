@@ -1,0 +1,28 @@
+(#sync-1-n send receive)
+
+(#restrict receive)
+
+(#replicated-vars ib ob x)
+
+;; code for component type Bit
+(#def A
+      (#guard (= ib 0)
+      (receive (= "msg[0]" 1) (x) (ob) (1))))
+
+(#def B
+      (#guard (= ib 1)
+      (send (= (that ib) 0) (ib) (ob) (1))))
+
+(#def Bit
+      (#choice
+      (#call A) 
+      (#call B)))
+
+;; initialization 
+
+(#agent B1 Bit (ib 1) (ob 0) (x 0))
+(#agent B2 Bit (ib 0) (ob 0) (x 0))
+(#agent B3 Bit (ib 0) (ob 0) (x 0))
+
+(#system (B1 1) (B2 1) (B3 1))
+

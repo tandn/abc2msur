@@ -1,0 +1,14 @@
+component Elem
+	  attributes: n,s
+	  behaviour:
+	  let {
+	      A := <s = 1>(n)@(n <= this.n).B
+	      B := (x >= this.n)(x).[s := 0]nil
+          }
+	  init  A | B
+end
+
+
+C1: Elem (s -> 1, n -> 1)
+C2: Elem (s -> 1, n -> 2)
+C3: Elem (s -> 1, n -> 3)

@@ -1,0 +1,53 @@
+(#sync-1-n send receive)
+
+(#restrict receive)
+
+(#replicated-vars n d c r id x y)
+
+;; code for component type Manager
+(#def A
+      (send (= (that r) 0) (2) ))
+
+(#def B
+      (#choice
+      (#seq
+        (#guard (< c n)
+          (receive (= "msg[0]" 1) (x) (c) ((+ c 1))))
+        (#call B)) 
+      (#seq
+        (#guard (< c n)
+          (receive (= "msg[0]" 0) (x) ))
+        (#guard (< c n)
+          (send (= (that r) 0) (0) ))) 
+      (#guard (= c n)
+        (send (= (that r) 0) (1) ))))
+
+(#def Manager
+      (#par
+      (#call A) 
+      (#call B)))
+
+;; code for component type Participant
+(#def A
+      (#choice
+      (#seq
+        (receive (and (= (that r) 1) (= "msg[0]" 2)) (x) )
+        (#choice
+          (#seq
+            (send (= (that id) 1) (d) )
+            (#call A)) 
+          (receive (and (= (that id) 1) (/= "msg[0]" 2)) (y) (d) (y)))) 
+      (receive (and (= (that r) 1) (/= "msg[0]" 2)) (x) (d) (x))))
+
+(#def Participant
+      (#call A))
+
+;; initialization 
+
+(#agent C1 Manager (n 3) (c 0) (r 1) (y 0) (x 0))
+(#agent C2 Participant (d 1) (r 0) (y 0) (x 0))
+(#agent C3 Participant (d 0) (r 0) (y 0) (x 0))
+(#agent C4 Participant (d 0) (r 0) (y 0) (x 0))
+
+(#system (C1 1) (C2 1) (C3 1) (C4 1))
+
