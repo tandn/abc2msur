@@ -11,7 +11,7 @@
         (send #t (u) )
         (receive (= "msg[0]" u) (x) (p) (1))) 
       (#seq
-        (receive (= (that r) r) (x) )
+        (receive (= (#var-of r that) r) (x) )
         (#seq
           (receive (/= "msg[0]" u) (y) )
           (#call A)))))
@@ -22,11 +22,11 @@
 ;; code for component type Follower
 (#def P
       (#seq
-      (receive (/= (that r) r) (x) )
+      (receive (/= (#var-of r that) r) (x) )
       (#choice
         (send #t (x) (p) (1)) 
         (#seq
-          (receive (and (= "msg[0]" x) (= (that r) r)) (y) )
+          (receive (and (= "msg[0]" x) (= (#var-of r that) r)) (y) )
           (#call P)))))
 
 (#def Follower

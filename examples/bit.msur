@@ -11,7 +11,7 @@
 
 (#def B
       (#guard (= ib 1)
-      (send (= (that ib) 0) (ib) (ob) (1))))
+      (send (= (#var-of ib that) 0) (ib) (ob) (1))))
 
 (#def Bit
       (#choice
