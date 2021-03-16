@@ -1,7 +1,9 @@
 -module(abc2msur).
 -export([file/1, main/1, view/1, flatten/1]).
--define(Config,"(#sync-1-n send receive)\n\n(#restrict receive)\n\n").
+-define(CONFIG,"(#sync*)\n\n(#restrict send receive)\n\n").
 -define(FS,"  ").
+-define(MSGLEN, "MSGLEN").
+-define(TEMPLATE, "abcheader").
 -record(state,{aware, unfold, params, space}).
 
 print(X) -> io:format("~p~n", [X]).
@@ -52,7 +54,7 @@ trans(Fname, String) when is_list(String) ->
     ets:new(auxilary,[named_table]),
     ets:new(abcsystem,[named_table]), %% the table that keeps all
     %% Store code definitions
-    preprocessing(CompDefs), % FULL OF SIDE-EFFECTS!
+    init(CompDefs), % FULL OF SIDE-EFFECTS!
     AttEnv = ets:lookup_element(abcsystem, attributes, 2),
     ets:new(msursystem,[named_table]), %% the table that store trasnlated code
     ets:insert(msursystem,{allmodules, CNames}),
@@ -64,7 +66,7 @@ body(Fname, [CName|Rest], Comp_inits) ->
     ets:insert(CName,{body,[]}),
     ets:insert(CName, {header, Header}),
 
-    Process = #{ proc_name => CName},
+    %Process = #{ proc_name => CName},
     ets:insert(CName, {visited, []}), % the init process have the same name as component name
 
     AllDefs = ets:lookup_element(CName,beh,2),
@@ -94,10 +96,17 @@ body(Fname, [], Comp_inits) ->
 					    ++ ")",
 					{[Elem | Acc],[CInit | Sys]}
 				end, {[],[]}, Comp_inits),
+
     Comps2 = string:join(lists:reverse(Comps),"\n") ++ "\n\n",
     Sys2 = "(#system " ++ string:join(lists:map(fun(X) -> "(" ++ string(X) ++ " 1)" end, lists:reverse(Sys))," ") ++ ")\n\n",
+    file:write_file(Fname ++ ".msur",[?CONFIG,RepVars]),
+    DECLAR = "(#template "
+	++ get_template_name(?TEMPLATE)
+	++ " (\"aux_vars\" \""
+	++ get_msg_len_name(?MSGLEN)
+	++ "\" " ++ integer_to_list(ets:lookup_element(abcsystem,msglen,2)) ++ ")\n\n",
 
-    file:write_file(Fname ++ ".msur",[?Config,RepVars]),
+    file:write_file(Fname ++ ".msur",[DECLAR], [append]),
     AllNames = ets:lookup_element(msursystem,allmodules,2),
     [file:write_file(Fname ++ ".msur", [ets:lookup_element(CName,header,2), ets:lookup_element(CName,body,2)], [append]) || CName <- AllNames],
     file:write_file(Fname ++ ".msur",[";; initialization \n\n",Comps2, Sys2], [append]).
@@ -134,7 +143,7 @@ eval({prefix, Left, Right}, CName, #state{space = SP} = ActionState) ->
 	")";
 
 eval({call, ProcName, Args}, CName, ActionState = #state{space = SP, unfold = UF}) ->
-    space(SP) ++ atom_to_list(ProcName);
+    space(SP) ++ "(#call " ++ atom_to_list(ProcName) ++ ")";
 
 eval({choice, _,_} = Code, CName, #state{space = SP} = ActionState) ->
     space(SP) ++  "(#choice\n" ++ string:join([eval(X, CName, ActionState#state{space = SP + 1}) || X <- flatten(Code)], " \n") ++ ")";
@@ -143,7 +152,7 @@ eval({par, _, _} = Code, CName, ActionState = #state{space = SP, params = Args})
     space(SP) ++ "(#par\n" ++ string:join([eval(P, CName, ActionState#state{space = SP + 1}) || P <- flatten(Code)], " \n") ++ ")";
 
 eval(nil, _, ActionState = #state{space = SP}) ->
-    space(SP) ++ "nop";
+    space(SP) ++ "#nop";
 
 %% should never get in here
 eval(FINAL, CName, ActionState) ->
@@ -152,8 +161,8 @@ eval(FINAL, CName, ActionState) ->
 
 %% get specifications of actions
 build_act({{output, Exps, Pred}, Upd}, CName, #state{aware = Aware, params = Params, space = SP}) ->
+    update_max_msg_len(length(Exps)),
     MyAtts = my_attrs(CName),
-    %io:format("my att ~p~n",[MyAtts]),
     OtherAtts = other_attrs(CName),
     G = utils:build_apred(MyAtts,Aware),
     M = utils:build_msg(MyAtts,Exps),
@@ -170,11 +179,10 @@ build_act({{input, Pred, Vars}, Upd}, CName, #state{aware = Aware, params = Para
     MyAtts = my_attrs(CName),
     OtherAtts = other_attrs(CName),
     Msg = bound_assignment(Vars),
-    X = "(" ++ if length(Vars) == 1 ->
+    X = if length(Vars) == 1 ->
 		Vars;
-		  true -> "list " ++ string:join(Vars," ")
-	       end
-	++ ")",
+	   true -> "(list " ++ string:join(Vars," ") ++ ")"
+	end,
     G = utils:build_apred(MyAtts,Aware),
     U = utils:build_update(MyAtts,Upd,Msg),
     %io:format("My Atts ~p, Other Atts ~p~n",[MyAtts,OtherAtts]),
@@ -186,9 +194,10 @@ build_act({{input, Pred, Vars}, Upd}, CName, #state{aware = Aware, params = Para
    space(SP) ++ Res.
 
 
-preprocessing(CompDefs) ->
+init(CompDefs) ->
     ets:insert(abcsystem, {attributes, #{}}),
     ets:insert(abcsystem, {vars, []}),
+    ets:insert(abcsystem, {msglen, 0}),
     %% component indexes
     I = lists:seq(0,length(CompDefs) - 1),
     Comps = lists:zip(I, CompDefs),
@@ -305,3 +314,25 @@ space(C) ->
 collect_vars(Vars) ->
     Acc = ets:lookup_element(abcsystem, vars, 2),
     ets:insert(abcsystem, {vars, Vars ++ Acc}).
+
+
+%% other helper functions
+update_max_msg_len(New) ->
+    Current = ets:lookup_element(abcsystem, msglen, 2),
+    if New > Current ->
+	    ets:insert(abcsystem, {msglen, New});
+       true ->
+	    ok
+    end.
+
+get_msg_len_name(Default) ->
+    case application:get_env(msg_len_name) of
+	undefined -> Default;
+	Name -> Name
+    end.
+
+get_template_name(Default) ->
+    case application:get_env(template_name) of
+	undefined -> Default;
+	Name -> Name
+    end.

@@ -42,7 +42,7 @@ build_update(MyAtts,Upd, Msg) ->
     build_update(MyAtts,Upd,Msg,[]).
 
 build_update(_,[],_,[]) -> "";
-build_update(_,[],_,[{F,S}]) -> "(" ++ F ++ ")" ++ " " ++ "(" ++ S ++ ")";
+build_update(_,[],_,[{F,S}]) -> F ++ " " ++ S;
 build_update(_,[],_,Acc) ->
     Res = lists:reverse(Acc),
     "(list " ++ string:join([X || {X,_} <- Res]," ") ++ ")" ++ " " ++ "(list " ++ string:join([Y || {_,Y} <- Res]," ") ++ ")";
@@ -52,22 +52,20 @@ build_update(MyAtts,[{F,S}|T],M,Acc) ->
 build_apred(_,[]) ->
    "";
 build_apred(MyAtts,Pred) ->
-% io:format("build aware pred ~p with b ~p ~n",[Pred,B]),
-   evall(MyAtts,Pred,[]).
+    %% io:format("build aware pred ~p with b ~p ~n",[Pred,B]),
+    evall(MyAtts,Pred,[]).
 
 %% this functions returns code for subpredicates if there any (to deal with membership predicate) and code for the input predicate Pred
 build_spred(_,[]) ->
     "#t";
 build_spred(OtherAtts,Pred) ->
-   % io:format("build sending pred ~p ~n",[Pred]),
-    %% create temporary names for variables
+    %% io:format("build sending pred ~p ~n",[Pred]),
     evals(OtherAtts,Pred).
 
 %% receiving predicates can refer to previous variables in Bound or new variables in the message
 build_rpred(_,[], _) ->
     "#t";
 build_rpred(OtherAtts, Pred, M) ->
-%    "fun(_LclE, _M, _RmtE) -> msg_size(_M) == " ++ integer_to_list(length(M)) ++ " andalso " ++ evalr(OtherAtts, Pred, M) ++ " end".
     evalr(OtherAtts, Pred, M).
 
 evall(_,{self,Att},_M) ->
@@ -90,7 +88,7 @@ evall(_,"false",_) -> "#f";
 evall(_,empty_vector,_) -> "[]";
 evall(_,empty_set,_) -> "sets:new()";
 evall(_,{const,C},_) -> C;
-evall(_,{minusconst,C},_) -> "(- 0 " ++ C ++ ")";
+evall(_,{minusconst,C},_) -> "-" ++ C;
 evall(_,{token,T},_) -> T;
 evall(Atts,[_|_] = L,_M) -> %really bracket of a list
     string:join([evall(Atts,X,_M) || X <- L],",");
@@ -139,7 +137,7 @@ evals(_,"false") -> "#f";
 evals(OtherAtts,{literal,Name}) ->
     case lists:member(Name,OtherAtts) of
 	true ->
-	        "(#var-of " ++ Name ++ " that)";
+	        "(#var-of " ++ Name ++ " \"that\")";
 	false ->
 	    Name
     end;
@@ -187,7 +185,7 @@ evalr(_,"false", _) -> "#f";
 evalr(_,{self,Att},_) -> Att;
 evalr(_,{param,Att},_) -> Att;
 evalr(_,{const,C},_) -> C;
-evalr(_,{minusconst,C}, _) -> "(0 - " ++ C ++ ")";
+evalr(_,{minusconst,C}, _) -> "-" ++ C;
 evalr(_,[],_) -> "[]";
 evalr(_,{token,T},_) -> T;
 evalr(OtherAtts,[{self,_}=Term], M) ->
@@ -209,7 +207,7 @@ evalr(OtherAtts,{literal,Name}, M) ->
     %io:format("verify ~p in ~p ~n",[Name,OtherAtts]),
     case lists:member(Name,OtherAtts) of
 	true ->
-	    "(#var-of " ++ Name ++ " that)";
+	    "(#var-of " ++ Name ++ " \"that\")";
 	false ->
 	    case proplists:get_value(Name,M) of
 		undefined ->
@@ -229,8 +227,9 @@ build_msg(Atts, Exps) ->
 build_msg(_,empty,_) ->
     "()";
 build_msg(_,[],S) -> %
-    Res = string:join(lists:reverse(S)," "),
-    Msg = "(" ++ if length(S) == 1 -> Res; true -> "list " ++ Res end ++ ")",
+    Msg = if length(S) == 1 -> [H|_] = S, H;
+	     true -> "(list " ++ string:join(lists:reverse(S)," ") ++ ")"
+	  end,
     Msg;
 build_msg(Atts,[H|T], S) ->
     build_msg(Atts,T,[evale(Atts,H)|S]).

@@ -6,7 +6,10 @@
    [kernel,
     stdlib
    ]},
-  {env,[]},
+  {env,[
+       {msg_len_name, "MSGLEN"},
+       {template_name, "abcheader"}]},
+
   {modules, []},
 
   {maintainers, []},

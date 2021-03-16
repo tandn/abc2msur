@@ -1,6 +1,6 @@
-(#sync-1-n send receive)
+(#sync*)
 
-(#restrict receive)
+(#restrict send receive)
 
 (#replicated-vars p r u x y)
 
@@ -8,12 +8,12 @@
 (#def A
       (#choice
       (#seq
-        (send #t (u) )
-        (receive (= "msg[0]" u) (x) (p) (1))) 
+        (send #t u )
+        (receive (= "msg[0]" u) x (p 1))) 
       (#seq
-        (receive (= (#var-of r that) r) (x) )
+        (receive (= (#var-of r "that") r) x )
         (#seq
-          (receive (/= "msg[0]" u) (y) )
+          (receive (/= "msg[0]" u) y )
           (#call A)))))
 
 (#def Dancer
@@ -22,11 +22,11 @@
 ;; code for component type Follower
 (#def P
       (#seq
-      (receive (/= (#var-of r that) r) (x) )
+      (receive (/= (#var-of r "that") r) x )
       (#choice
-        (send #t (x) (p) (1)) 
+        (send #t x (p 1)) 
         (#seq
-          (receive (and (= "msg[0]" x) (= (#var-of r that) r)) (y) )
+          (receive (and (= "msg[0]" x) (= (#var-of r "that") r)) y )
           (#call P)))))
 
 (#def Follower

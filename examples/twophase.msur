@@ -1,26 +1,28 @@
-(#sync-1-n send receive)
+(#sync*)
 
-(#restrict receive)
+(#restrict send receive)
 
 (#replicated-vars n d c r id x y)
 
+(#template abcheader ("aux_vars" "MSGLEN" 1)
+
 ;; code for component type Manager
 (#def A
-      (send (= (that r) 0) (2) ))
+      (send (= (#var-of r "that") 0) 2 ))
 
 (#def B
       (#choice
       (#seq
         (#guard (< c n)
-          (receive (= "msg[0]" 1) (x) (c) ((+ c 1))))
+          (receive (= "msg[0]" 1) x c (+ c 1)))
         (#call B)) 
       (#seq
         (#guard (< c n)
-          (receive (= "msg[0]" 0) (x) ))
+          (receive (= "msg[0]" 0) x ))
         (#guard (< c n)
-          (send (= (that r) 0) (0) ))) 
+          (send (= (#var-of r "that") 0) 0 ))) 
       (#guard (= c n)
-        (send (= (that r) 0) (1) ))))
+        (send (= (#var-of r "that") 0) 1 ))))
 
 (#def Manager
       (#par
@@ -31,13 +33,13 @@
 (#def A
       (#choice
       (#seq
-        (receive (and (= (that r) 1) (= "msg[0]" 2)) (x) )
+        (receive (and (= (#var-of r "that") 1) (= "msg[0]" 2)) x )
         (#choice
           (#seq
-            (send (= (that id) 1) (d) )
+            (send (= (#var-of id "that") 1) d )
             (#call A)) 
-          (receive (and (= (that id) 1) (/= "msg[0]" 2)) (y) (d) (y)))) 
-      (receive (and (= (that r) 1) (/= "msg[0]" 2)) (x) (d) (x))))
+          (receive (and (= (#var-of id "that") 1) (/= "msg[0]" 2)) y d y))) 
+      (receive (and (= (#var-of r "that") 1) (/= "msg[0]" 2)) x d x)))
 
 (#def Participant
       (#call A))
