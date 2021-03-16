@@ -4,7 +4,7 @@
 
 (#replicated-vars p r u x y)
 
-(#template abcheader (MSGLEN" 1))
+(#template abcheader ("MSGLEN" 1))
 
 ;; code for component type Dancer
 (#def A

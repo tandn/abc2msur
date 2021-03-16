@@ -4,7 +4,7 @@
 
 (#replicated-vars n s x)
 
-(#template abcheader (MSGLEN" 1))
+(#template abcheader ("MSGLEN" 1))
 
 ;; code for component type Elem
 (#def A

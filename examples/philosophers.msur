@@ -4,7 +4,7 @@
 
 (#replicated-vars c o u x z y)
 
-(#template abcheader (MSGLEN" 2))
+(#template abcheader ("MSGLEN" 2))
 
 ;; code for component type Phi
 (#def A
