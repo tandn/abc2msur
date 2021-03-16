@@ -29,4 +29,4 @@ will produce a Msur specification with the name "file.msur" in the same location
 Verification
 ----
 
-By using the toolset supporting the verification of (msur)[https://github.com/labs-lang/masseur] specifications.
+By using the toolset supporting the verification of [msur](https://github.com/labs-lang/masseur) specifications.
