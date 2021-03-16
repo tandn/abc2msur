@@ -134,7 +134,7 @@ eval({prefix, Left, Right}, CName, #state{space = SP} = ActionState) ->
 	")";
 
 eval({call, ProcName, Args}, CName, ActionState = #state{space = SP, unfold = UF}) ->
-    space(SP) ++ "(#call " ++ atom_to_list(ProcName) ++ ")";
+    space(SP) ++ atom_to_list(ProcName);
 
 eval({choice, _,_} = Code, CName, #state{space = SP} = ActionState) ->
     space(SP) ++  "(#choice\n" ++ string:join([eval(X, CName, ActionState#state{space = SP + 1}) || X <- flatten(Code)], " \n") ++ ")";
