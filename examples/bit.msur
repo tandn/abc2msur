@@ -4,14 +4,16 @@
 
 (#replicated-vars ib ob x)
 
+(#template abcheader (MSGLEN" 1))
+
 ;; code for component type Bit
 (#def A
       (#guard (= ib 0)
-      (receive (= "msg[0]" 1) x (ob 1))))
+      (receive (= "msg[0]" 1) x ob 1)))
 
 (#def B
       (#guard (= ib 1)
-      (send (= (#var-of ib "that") 0) ib (ob 1))))
+      (send (= (#var-of ib "that") 0) ib ob 1)))
 
 (#def Bit
       (#choice

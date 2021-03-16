@@ -4,7 +4,7 @@
 
 (#replicated-vars n d c r id x y)
 
-(#template abcheader ("aux_vars" "MSGLEN" 1)
+(#template abcheader (MSGLEN" 1))
 
 ;; code for component type Manager
 (#def A

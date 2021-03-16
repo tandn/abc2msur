@@ -4,12 +4,14 @@
 
 (#replicated-vars p r u x y)
 
+(#template abcheader (MSGLEN" 1))
+
 ;; code for component type Dancer
 (#def A
       (#choice
       (#seq
         (send #t u )
-        (receive (= "msg[0]" u) x (p 1))) 
+        (receive (= "msg[0]" u) x p 1)) 
       (#seq
         (receive (= (#var-of r "that") r) x )
         (#seq
@@ -24,7 +26,7 @@
       (#seq
       (receive (/= (#var-of r "that") r) x )
       (#choice
-        (send #t x (p 1)) 
+        (send #t x p 1) 
         (#seq
           (receive (and (= "msg[0]" x) (= (#var-of r "that") r)) y )
           (#call P)))))

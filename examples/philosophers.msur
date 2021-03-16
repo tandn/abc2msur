@@ -1,0 +1,62 @@
+(#sync*)
+
+(#restrict send receive)
+
+(#replicated-vars c o u x z y)
+
+(#template abcheader (MSGLEN" 2))
+
+;; code for component type Phi
+(#def A
+      (#choice
+      (#seq
+        (#guard (= o 1)
+          (send #t (list u c) ))
+        (#choice
+          (#seq
+            (#guard (= o 1)
+              (receive (and (= u "msg[0]") (/= "msg[1]" c)) (list x y) o c))
+            (#call A)) 
+          (#seq
+            (#guard (= o 1)
+              (receive (and (= u "msg[0]") (= "msg[1]" c)) (list x y) c 0))
+            (#call A)))) 
+      (#seq
+        (#guard (= o 1)
+          (receive (= (#var-of o "that") o) (list x y) ))
+        (#seq
+          (#guard (= o 1)
+            (receive (/= (#var-of o "that") o) (list x y) ))
+          (#call A)))))
+
+(#def B
+      (#seq
+      (#guard (= o 0)
+        (receive (/= (#var-of o "that") o) (list x y) ))
+      (#choice
+        (#seq
+          (#guard (/= y c)
+            (send #t (list x c) o y))
+          (#call B)) 
+        (#seq
+          (#guard (= y c)
+            (send #t (list x c) (list o c) (list 1 0)))
+          (#call B)) 
+        (#seq
+          (#guard (= o 0)
+            (receive (= "msg[0]" x) (list z y) ))
+          (#call B)))))
+
+(#def Phi
+      (#par
+      (#call A) 
+      (#call B)))
+
+;; initialization 
+
+(#agent A1 Phi (u 1) (c 1) (o 1) (y 0) (z 0) (x 0))
+(#agent A2 Phi (u 2) (c 1) (o 0) (y 0) (z 0) (x 0))
+(#agent A3 Phi (u 3) (c 1) (o 0) (y 0) (z 0) (x 0))
+
+(#system (A1 1) (A2 1) (A3 1))
+

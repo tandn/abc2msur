@@ -102,9 +102,8 @@ body(Fname, [], Comp_inits) ->
     file:write_file(Fname ++ ".msur",[?CONFIG,RepVars]),
     DECLAR = "(#template "
 	++ get_template_name(?TEMPLATE)
-	++ " (\"aux_vars\" \""
-	++ get_msg_len_name(?MSGLEN)
-	++ "\" " ++ integer_to_list(ets:lookup_element(abcsystem,msglen,2)) ++ ")\n\n",
+	++ " ("	++ get_msg_len_name(?MSGLEN)
+	++ "\" " ++ integer_to_list(ets:lookup_element(abcsystem,msglen,2)) ++ "))\n\n",
 
     file:write_file(Fname ++ ".msur",[DECLAR], [append]),
     AllNames = ets:lookup_element(msursystem,allmodules,2),
