@@ -4,19 +4,23 @@ abc2msur
 The src folder contains the translator which takes an abc specification as input and produces  msur program as output
 
 
-
 Build
 -----
     $ rebar3 compile
+
+Require
+----
+    erl
+    rebar3
 
 This results in a folder _build where beam files are located.
 
 Translation
 ----
 
-Make sure that your abc specification has the name of "file.abc"
+Given an input abc specification with the name of "file.abc"
 
-The command has the form of
+The command
 
 > erl -pa _build/default/lib/abc2msur/ebin/ -eval "abc2msur:file(\"examples/file.abc\")" -run init stop -noshell
 
@@ -25,5 +29,4 @@ will produce a Msur specification with the name "file.msur" in the same location
 Verification
 ----
 
-By using the toolset supporting verification of msur specifications (which eventually utilize state-of-the-art C verifiers)
-https://github.com/labs-lang/masseur
+By using the toolset supporting the verification of (msur)[https://github.com/labs-lang/masseur] specifications.
