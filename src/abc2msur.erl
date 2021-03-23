@@ -1,6 +1,6 @@
 -module(abc2msur).
--export([file/1, main/1, view/1, flatten/1]).
--define(CONFIG,"(#sync*)\n\n(#restrict send receive)\n\n").
+-export([file/1, view/1]).
+-define(CONFIG,"(#sync* send receive)\n\n(#restrict send receive)\n\n").
 -define(FS,"  ").
 -define(MSGLEN, "MSGLEN").
 -define(TEMPLATE, "abcheader").
@@ -8,14 +8,14 @@
 
 print(X) -> io:format("~p~n", [X]).
 
-%% build the project
-main(["build"]) ->
-    leex:file(scanner),
-    yecc:file(parser);
-main([Fname]) -> file(Fname);
-main(["scan", Fname]) ->
-	{ok, Binary} = file:read_file(Fname),
-	print(scanner:string(binary_to_list(Binary))).
+%% %% build the project
+%% main(["build"]) ->
+%%     leex:file(scanner),
+%%     yecc:file(parser);
+%% main([Fname]) -> file(Fname);
+%% main(["scan", Fname]) ->
+%% 	{ok, Binary} = file:read_file(Fname),
+%% 	print(scanner:string(binary_to_list(Binary))).
 
 %% run a file name
 file([Atom]) when is_atom(Atom) ->
@@ -81,10 +81,10 @@ body(Fname, [CName|Rest], Comp_inits) ->
 body(Fname, [], Comp_inits) ->
     %% Print = "\n %% COMPONENT BEHAVIOUR " ++ atom_to_list(CName) ++ "\n",
     %% output_abel(CName,Print),
-    Vars = sets:to_list(sets:from_list(ets:lookup_element(abcsystem, vars, 2))),
-    Attrs = sets:to_list(sets:from_list(lists:foldl(fun(X, Acc) ->
+    Vars = unique(ets:lookup_element(abcsystem, vars, 2)),
+    Attrs = unique(lists:foldl(fun(X, Acc) ->
 				X ++ Acc
-			end, [], maps:values(ets:lookup_element(abcsystem, attributes, 2))))),
+			end, [], maps:values(ets:lookup_element(abcsystem, attributes, 2)))),
     RepVars = "(#replicated-vars " ++ string:join(lists:reverse(Vars ++ Attrs)," ") ++ ")\n\n",
 
     %% Collect attribute environments of all compnents
@@ -138,7 +138,7 @@ eval({prefix, Left, nil}, CName, #state{space = SP} = ActionState) ->
 eval({prefix, Left, Right}, CName, #state{space = SP} = ActionState) ->
     space(SP) ++ "(#seq\n" ++
 	build_act(Left, CName, ActionState#state{space = SP + 1}) ++ "\n" ++
-	eval(Right, CName, ActionState#state{space = SP + 1}) ++
+	eval(Right, CName, ActionState#state{space = SP + 1,aware=[]}) ++
 	")";
 
 eval({call, ProcName, Args}, CName, ActionState = #state{space = SP, unfold = UF}) ->
@@ -335,3 +335,6 @@ get_template_name(Default) ->
 	undefined -> Default;
 	Name -> Name
     end.
+
+unique([]) -> [];
+unique([H|T]) -> [H | [X || X <- unique(T), X =/= H]].
